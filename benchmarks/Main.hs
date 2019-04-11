@@ -18,9 +18,12 @@ main = do
   bench trials "recallDelimited" (memDelimited item) recallDelimited
   bench trials "memPrefixed255" item (memPrefixed255)
   bench trials "recallPrefixed255" (memPrefixed255 item) recallPrefixed255
+  bench trials "recallPrefixed255TwoFields" (memPrefixed255 item) recallPrefixed255TwoFields
 
   bench trials "memPrefixed65535" item (memPrefixed65535)
   bench trials "recallPrefixed65535" (memPrefixed65535 item) recallPrefixed65535
+  bench trials "recallPrefixed65535TwoFields" (memPrefixed65535 item) recallPrefixed65535TwoFields
+  bench trials "recallPrefixed65535ThreeFields" (memPrefixed65535 item) recallPrefixed65535ThreeFields
 
 
 bench :: Int -> String -> a -> (a -> b) -> IO ()
@@ -76,6 +79,11 @@ recallPrefixed255 =
   unLengthPrefix255 BenchItem
                     (field &. field &. field &. field &. field)
 
+recallPrefixed255TwoFields :: BS.ByteString -> BenchItem
+recallPrefixed255TwoFields =
+  unLengthPrefix255 BenchItem
+                    (twoFields &. twoFields &. field)
+
 memPrefixed65535 :: BenchItem -> BS.ByteString
 memPrefixed65535 item =
   lengthPrefix65535 [ field1 item, field2 item, field3 item, field4 item, field5 item ]
@@ -84,6 +92,16 @@ recallPrefixed65535 :: BS.ByteString -> BenchItem
 recallPrefixed65535 =
   unLengthPrefix65535 BenchItem
                       (field &. field &. field &. field &. field)
+
+recallPrefixed65535TwoFields :: BS.ByteString -> BenchItem
+recallPrefixed65535TwoFields =
+  unLengthPrefix65535 BenchItem
+                      (twoFields &. twoFields &. field)
+
+recallPrefixed65535ThreeFields :: BS.ByteString -> BenchItem
+recallPrefixed65535ThreeFields =
+  unLengthPrefix65535 BenchItem
+                      (threeFields &. twoFields)
 
 formatExponential :: Int -> Double -> String
 formatExponential precision d =

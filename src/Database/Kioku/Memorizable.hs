@@ -32,7 +32,7 @@ module Database.Kioku.Memorizable
   , lengthPrefix255, unLengthPrefix255
   , lengthPrefix65535, unLengthPrefix65535
 
-  , field, (&.), PrefixedFieldDecoder
+  , field, twoFields, threeFields, (&.), PrefixedFieldDecoder
   , MemorizeLength, RecallLength, LengthSize
   ) where
 
@@ -287,6 +287,24 @@ field recallLength lengthWidth cont f bs =
       !rest = BS.drop len start
 
   in cont (f $ recall value) rest
+
+-- The following two combinators are introduced as a workaround
+-- for a bug in GHC 8.x where the chaining of many occurances of
+-- an inlined operator (such as &.) causes a 'ticks exhausted'
+-- compilation error. We can workaround this by using twoFields
+-- and threeFields to reduce the number of chained operations so
+-- that the point of exhaustion is not reached. As an interesting
+-- side-effect of this, performance receives a boost over using
+-- the singular field, however there is diminishing returns here
+-- in that using threeFields is slightly slower than twoFields,
+-- but still a little faster than singular fields (see benchmarks).
+{-# INLINE twoFields #-}
+twoFields :: (Memorizable v, Memorizable w) => PrefixedFieldDecoder a (w -> a) b b v
+twoFields = field &. field
+
+{-# INLINE threeFields #-}
+threeFields :: (Memorizable v, Memorizable w, Memorizable m) => PrefixedFieldDecoder a (w -> m -> a) b b v
+threeFields = twoFields &. field
 
 {-# INLINE (&.) #-}
 (&.) :: PrefixedFieldDecoder (w -> b) t c r v
